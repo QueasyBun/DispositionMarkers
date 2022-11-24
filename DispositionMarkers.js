@@ -22,7 +22,7 @@ let usesTagger = true;
 
 //Setup script, create the parameters as global settings so they're accessible later and don't have to be redefined every time.
 Hooks.once("setup", () => {
-   console.info("World Script | Registering disposition marker worldscript");
+   console.info("World Script | Disposition markers | Registering disposition marker worldscript");
    
    //Setup the first set of parameters
    globalThis.DispositionParamsFriendly =
@@ -56,34 +56,37 @@ Hooks.on("canvasReady", () => {
 });
 
 //Trigger every time a token is updated.
-console.log("World Script | Disposition Marker update hook index is " + Hooks.on("updateToken", async function(doc, change) {
-    
+console.log("World Script | Disposition markers | Disposition Marker update hook index is " + Hooks.on("updateToken", async function(doc, change) {
+   
     //If the change is in the tokenmagic flags, do nothing (Adding and deleting filters later will trigger another instance of this event, so this check prevents a loop).
     if(change.flags?.tokenmagic != undefined)
-    return;
-    
-    //Clear any disposition markers. Doing this before the Social check so that removing the tag also removes the marker.
-    await TokenMagic.deleteFilters(doc._object, "dispositionMarker");
+        return;
+     
+    //Clear any disposition markers on social tokens. Doing this before the Social check so that removing the tag also removes the marker.
+    //Keep in mind that the flag is not cleared until all events are resolved, so this check still returns true even if this event removes the tag.
+    if(!doc.flags?.tagger?.tags?.includes("Social") || !usesTagger)
+        await TokenMagic.deleteFilters(doc._object, "dispositionMarker");
     
     //Store wether or not the change adds the social flag. This is used in later checks.
-    let changeAddsSocialFlag = change.flags?.tagger?.tags?.includes("Social");
+    let changeHasSocialFlag = change.flags?.tagger?.tags?.includes("Social");
     
     //If the token that triggered this does not have the "Social" tag, and this event doesn't add it, do nothing. This is ignored if usesTagger is set to false.
-	if(usesTagger && !doc.flags?.tagger?.tags?.includes("Social") && !changeAddsSocialFlag)
-    return;
+	if(usesTagger && !doc.flags?.tagger?.tags?.includes("Social") && !changeHasSocialFlag)
+        return;
 
     //If the change does not include a change to disposition, and this change does not add the social tag, do nothing.
     //If the change does add the social tag, grab the token's current distribution.
-    let disposition = changeAddsSocialFlag ? doc.disposition : change.disposition;
+    let disposition = changeHasSocialFlag ? doc.disposition : change.disposition;
+    
     if(disposition == undefined)
-    return;
+        return;
 
     //If it made it this far, set the disposition marker.
     setDispositionMarker(doc._object,disposition);
 }));
 
 function setDispositionMarker(placeable, disposition) {
-    console.info("World Script | Changing disposition marker on token " + placeable.id + " (" + placeable.name + ")");
+    console.info("World Script | Disposition markers | Changing disposition marker on token " + placeable.id + " (" + placeable.name + ")");
     
     //Figure out which set of parameters should be applied to the filter based on the given disposition.
     let pickParams;
