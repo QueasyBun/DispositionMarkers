@@ -64,7 +64,7 @@ console.log("World Script | Disposition markers | Disposition Marker update hook
      
     //Clear any disposition markers on social tokens. Doing this before the Social check so that removing the tag also removes the marker.
     //Keep in mind that the flag is not cleared until all events are resolved, so this check still returns true even if this event removes the tag.
-    if(!doc.flags?.tagger?.tags?.includes("Social") || !usesTagger)
+    if(!doc.flags?.tagger?.tags?.includes("Social") && usesTagger)
         await TokenMagic.deleteFilters(doc._object, "dispositionMarker");
     
     //Store wether or not the change adds the social flag. This is used in later checks.
