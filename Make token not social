@@ -1,0 +1,13 @@
+(() => {
+    let tokens = canvas.tokens.controlled;
+    if(tokens.length == 0 || tokens== null) {
+        ui.notifications.error("Select a token to do this!");
+        return;
+    }
+
+    tokens.forEach(token => {
+        if(Tagger.hasTags(token,"Social"))
+            Tagger.removeTags(token,"Social");
+    });
+
+})();
